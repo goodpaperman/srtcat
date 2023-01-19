@@ -94,14 +94,23 @@ function concate_file()
 
     local line=""
     local n=0 
+    local m=0
     local val=""
     local tmp=""
 
     echo "base time: ${hour_base}:${min_base}:${sec_base},${msec_base}; base ord: ${ord_base}" 1>&2
+    if [ ${hour_base} -eq 0 -a ${min_base} -eq 0 -a ${sec_base} -eq 0 -a ${msec_base} -eq 0 ]; then 
+        if [ ${ord_base} -gt 0 ]; then 
+            echo "all zero time but ordinal > 0, fatal error" 1>&2
+            exit 1
+        fi
+    fi
+
     while read line; do
         line=$(echo "${line}" | tr -d '\r')
         # echo "line=${line}" 1>&2
-        case $((n%4)) in
+        m=$((n%4))
+        case $m in
             0)
                 # ordinal
                 curr_ord=$((line+ord_base))
@@ -109,14 +118,16 @@ function concate_file()
                 ;;
             1)
                 # time range
-                # 00:01:02,003 --> 04:05:06,007 after break:
-                #  1  2  3  4  56   7  8  9  10 
-                # note add $X/1 to remove leading 0s
-                val=$(echo "${line}" | awk -F':|,|-|>' '{print "hour1="$1/1";min1="$2/1";sec1="$3/1";msec1="$4/1";hour2="$7/1";min2="$8/1";sec2="$9/1";msec2="$10/1";"}')
-                eval "${val}"
-                if [ ${hour_base} -eq 0 -a ${min_base} -eq 0 -a ${sec_base} -eq 0 -a ${msec_base} -eq 0 ]; then 
+                if [ ${ord_base} -eq 0 ]; then 
                     echo "${line}"
+                    # to determine last end time later
+                    val="${line##*--> }"
                 else 
+                    # 00:01:02,003 --> 04:05:06,007 after break:
+                    #  1  2  3  4  56   7  8  9  10 
+                    # note add $X/1 to remove leading 0s
+                    val=$(echo "${line}" | awk -F':|,|-|>' '{print "hour1="$1/1";min1="$2/1";sec1="$3/1";msec1="$4/1";hour2="$7/1";min2="$8/1";sec2="$9/1";msec2="$10/1";"}')
+                    eval "${val}"
                     tmp=$(time_add "${hour1}" "${min1}" "${sec1}" "${msec1}" "${hour_base}" "${min_base}" "${sec_base}" "${msec_base}")
                     val=$(time_add "${hour2}" "${min2}" "${sec2}" "${msec2}" "${hour_base}" "${min_base}" "${sec_base}" "${msec_base}")
                     echo "${tmp} --> ${val}"
@@ -142,11 +153,24 @@ function concate_file()
         n=$((n+1))
     done < ${file}
 
+    echo "record sub index $m" 1>&2
+    if [ $m -ne 3 ]; then 
+        if [ $m -eq 2 ]; then 
+            # lack a \n
+            echo ""
+        else 
+            echo "srt record not complete, sub record index $m != 3, fatal error!" 1>&2
+            exit 1
+        fi
+    fi
+
     # first parse the last end time after added with base time
     tmp=$(echo "${val}" | awk -F':|,' '{print "hour2="$1/1";min2="$2/1";sec2="$3/1";msec2="$4/1";"}')
     eval "${tmp}"
+
     # add timespan milli-seconds into end time..
     val=$(time_add "${hour2}" "${min2}" "${sec2}" "${msec2}" "0" "0" "0" "${time_span}")
+
     # 00:01:02,003 after break:
     #  1  2  3  4  
     tmp=$(echo "${val}" | awk -F':|,' '{print "hour1="$1/1";min1="$2/1";sec1="$3/1";msec1="$4/1";"}')
