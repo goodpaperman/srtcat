@@ -98,6 +98,8 @@ function concate_file()
     local m=0
     local val=""
     local tmp=""
+    local arr=()
+    local OLD_IFS=""
 
     echo "base time: ${hour_base}:${min_base}:${sec_base},${msec_base}; base ord: ${ord_base}" 1>&2
     if [ ${hour_base} -eq 0 -a ${min_base} -eq 0 -a ${sec_base} -eq 0 -a ${msec_base} -eq 0 ]; then 
@@ -125,12 +127,15 @@ function concate_file()
                     val="${line##*--> }"
                 else 
                     # 00:01:02,003 --> 04:05:06,007 after break:
-                    #  1  2  3  4  56   7  8  9  10 
-                    # note add $X/1 to remove leading 0s
-                    val=$(echo "${line}" | awk -F':|,|-|>' '{print "hour1="$1/1";min1="$2/1";sec1="$3/1";msec1="$4/1";hour2="$7/1";min2="$8/1";sec2="$9/1";msec2="$10/1";"}')
-                    eval "${val}"
-                    tmp=$(time_add "${hour1}" "${min1}" "${sec1}" "${msec1}" "${hour_base}" "${min_base}" "${sec_base}" "${msec_base}")
-                    val=$(time_add "${hour2}" "${min2}" "${sec2}" "${msec2}" "${hour_base}" "${min_base}" "${sec_base}" "${msec_base}")
+                    #  0  1  2  3   4   5  6  7  8 
+                    OLD_IFS="${IFS}"
+                    IFS=":, "
+                    arr=(${line})
+                    IFS="${OLD_IFS}"
+
+                    # note add 1$X-100|1000 to remove leading 0s
+                    tmp=$(time_add "$((1${arr[0]}-100))" "$((1${arr[1]}-100))" "$((1${arr[2]}-100))" "$((1${arr[3]}-1000))" "${hour_base}" "${min_base}" "${sec_base}" "${msec_base}")
+                    val=$(time_add "$((1${arr[5]}-100))" "$((1${arr[6]}-100))" "$((1${arr[7]}-100))" "$((1${arr[8]}-1000))" "${hour_base}" "${min_base}" "${sec_base}" "${msec_base}")
                     echo "${tmp} --> ${val}"
                 fi 
                 ;;
@@ -166,18 +171,22 @@ function concate_file()
     fi
 
     # first parse the last end time after added with base time
-    tmp=$(echo "${val}" | awk -F':|,' '{print "hour2="$1/1";min2="$2/1";sec2="$3/1";msec2="$4/1";"}')
-    eval "${tmp}"
-
+    OLD_IFS="${IFS}"
+    IFS=":,"
+    arr=(${val})
+    IFS="${OLD_IFS}"
     # add timespan milli-seconds into end time..
-    val=$(time_add "${hour2}" "${min2}" "${sec2}" "${msec2}" "0" "0" "0" "${time_span}")
-
     # 00:01:02,003 after break:
-    #  1  2  3  4  
-    tmp=$(echo "${val}" | awk -F':|,' '{print "hour1="$1/1";min1="$2/1";sec1="$3/1";msec1="$4/1";"}')
-    eval "${tmp}"
+    #  0  1  2  3  
+    val=$(time_add "$((1${arr[0]}-100))" "$((1${arr[1]}-100))" "$((1${arr[2]}-100))" "$((1${arr[3]}-1000))" "0" "0" "0" "${time_span}")
 
-    CONCATE_RESULT="start_hour=${hour1};start_min=${min1};start_sec=${sec1};start_msec=${msec1};start_ord=${curr_ord};"
+    OLD_IFS="${IFS}"
+    IFS=":,"
+    arr=(${val})
+    IFS="${OLD_IFS}"
+
+    # note add 1$X-100|1000 to remove leading 0s
+    CONCATE_RESULT="start_hour=$((1${arr[0]}-100));start_min=$((1${arr[1]}-100));start_sec=$((1${arr[2]}-100));start_msec=$((1${arr[3]}-1000));start_ord=${curr_ord};"
 }
 
 # @brief: srt main
