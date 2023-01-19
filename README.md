@@ -9,7 +9,7 @@ only support 1 line subtitle, multi-line are not supported now,
 but simply modify several code, it can support, I will do that if someone ask me to do..
 
 # test
-```shell
+```
 > sh srtcat.sh -t 1000 220808-114*.srt > 220808.txt
 timespan between file is: 1000 ms
 handle file 220808-114030.srt
