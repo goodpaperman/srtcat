@@ -82,16 +82,6 @@ function concate_file()
     local file=$7
     local curr_ord=0
     local curr_srt=""
-    # start time
-    local hour1=0
-    local min1=0
-    local sec1=0
-    local msec1=0
-    # end time
-    local hour2=0
-    local min2=0
-    local sec2=0
-    local msec2=0
 
     local line=""
     local n=0 
@@ -175,6 +165,7 @@ function concate_file()
     IFS=":,"
     arr=(${val})
     IFS="${OLD_IFS}"
+
     # add timespan milli-seconds into end time..
     # 00:01:02,003 after break:
     #  0  1  2  3  
