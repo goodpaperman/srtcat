@@ -33,7 +33,7 @@ function time_add()
     local ms3=0
 
     ms3=$((ms1+ms2))
-    if [ ${ms3} -gt 1000 ]; then 
+    if [ ${ms3} -ge 1000 ]; then 
         s3=$((ms3/1000))
         ms3=$((ms3%1000))
     fi
@@ -58,7 +58,8 @@ function time_add()
 
     # return "curr_hour=${h3};curr_min=${m3};curr_sec=${s3};curr_msec=${ms3}"
     echo "time add: ${h1}:${m1}:${s1},${ms1} + ${h2}:${m2}:${s2},${ms2} = ${h3}:${m3}:${s3},${ms3}" 1>&2
-    echo "${h3}:${m3}:${s3},${ms3}"
+    # echo "${h3}:${m3}:${s3},${ms3}"
+    printf "%02d:%02d:%02d,%03d\n" ${h3} ${m3} ${s3} ${ms3}
 }
 
 # @brief: srt single file concating, dumping to stdin
@@ -153,9 +154,9 @@ function concate_file()
         n=$((n+1))
     done < ${file}
 
-    echo "record sub index $m" 1>&2
     if [ $m -ne 3 ]; then 
         if [ $m -eq 2 ]; then 
+            echo "sub record index $m, supplement a carrier return" 1>&2
             # lack a \n
             echo ""
         else 
