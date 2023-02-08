@@ -198,3 +198,8 @@ vimdiff 220808.txt 220808.srt
 
 # see detail
 [https://www.cnblogs.com/goodcitizen/p/concat_srt_files_by_shell_scripts.html](https://www.cnblogs.com/goodcitizen/p/concat_srt_files_by_shell_scripts.html)
+
+# sponsorship
+buy me a cup of tea, I may motivated to develop a new version, which support multi-line subtitles..
+
+<img src="https://files-cdn.cnblogs.com/files/goodcitizen/wepay.bmp?t=1675132801" width = "400" alt="wechatpay" align=center />
